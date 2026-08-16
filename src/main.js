@@ -10,6 +10,7 @@ const canvas = document.querySelector('#game');
 const engine = new Engine(canvas, true, { stencil: true });
 const ui = {
   menu: document.querySelector('#menu'), hud: document.querySelector('#hud'),
+  chapterLabel: document.querySelector('#chapter-label'), bossName: document.querySelector('#boss-name'),
   ending: document.querySelector('#ending'), objective: document.querySelector('#objective'),
   health: document.querySelector('#health'), souls: document.querySelector('#souls'),
   prompt: document.querySelector('#prompt'), hands: document.querySelector('.hands'),
@@ -19,7 +20,7 @@ const ui = {
   endingCopy: document.querySelector('#ending-copy')
 };
 
-let scene, camera, state;
+let scene, camera, state, nextChapter = 1;
 const mat = (name, color, emissive = null) => {
   const m = new StandardMaterial(name, scene);
   m.diffuseColor = Color3.FromHexString(color);
@@ -94,27 +95,59 @@ function makeChef() {
   state.bossSpawned = true; ui.mission.classList.add('hidden'); ui.boss.classList.remove('hidden'); ui.objective.textContent = 'Defeat the Butcher Chef';
 }
 
-function createScene() {
+function makePrincipal() {
+  const root = buildHumanoid('evil-principal', new Vector3(0, 0, 22), { body: '#171a24', skin: '#857067' }, 1.42);
+  const suitMat = mat('principal-suit', '#11151e');
+  const tieMat = mat('principal-tie', '#6f090d', '#310306');
+  const hairMat = mat('principal-hair', '#171313');
+  const jacket = MeshBuilder.CreateBox('principal-jacket', { width: .82, height: 1.25, depth: .5 }, scene); jacket.parent = root; jacket.position.set(0, 1.25, 0); jacket.material = suitMat;
+  const tie = MeshBuilder.CreateBox('principal-tie', { width: .12, height: .72, depth: .04 }, scene); tie.parent = root; tie.position.set(0, 1.42, -.29); tie.material = tieMat;
+  const hair = MeshBuilder.CreateSphere('principal-hair', { diameterX: .66, diameterY: .32, diameterZ: .62, segments: 12 }, scene); hair.parent = root; hair.position.set(0, 2.34, .02); hair.material = hairMat;
+  const rulerMat = mat('ruler', '#6e4a28');
+  const ruler = MeshBuilder.CreateBox('punishment-ruler', { width: .12, height: 1.45, depth: .08 }, scene); ruler.parent = root; ruler.position.set(.8, 1.05, -.25); ruler.rotation.z = -.35; ruler.material = rulerMat;
+  const eyeMat = mat('principal-eyes', '#ef1a16', '#ef0808');
+  for (const x of [-.14, .14]) { const eye = MeshBuilder.CreateSphere('principal-eye', { diameter: .07 }, scene); eye.parent=root; eye.position.set(x,2.18,-.31); eye.material=eyeMat; }
+  state.enemies.push({ root, hp: 16, maxHp: 16, speed: 1.7, damage: 20, cooldown: 0, alive: true, boss: true });
+  state.bossSpawned = true; ui.mission.classList.add('hidden'); ui.boss.classList.remove('hidden'); ui.objective.textContent = 'Defeat the Evil Principal';
+}
+
+function spawnBoss() { state.chapter === 1 ? makeChef() : makePrincipal(); }
+
+function createScene(chapter = 1) {
   scene = new Scene(engine); scene.clearColor = new Color4(.018, .014, .012, 1); scene.collisionsEnabled = true;
   scene.fogMode = Scene.FOGMODE_EXP2; scene.fogDensity = .025; scene.fogColor = new Color3(.045, .03, .026);
-  state = { health: 100, saved: 0, enemies: [], survivors: [], keys: {}, ySpeed: 0, grounded: true, punching: false, bossSpawned: false, over: false, started: false, time: 0 };
+  state = { chapter, health: 100, saved: 0, enemies: [], survivors: [], keys: {}, ySpeed: 0, grounded: true, punching: false, bossSpawned: false, over: false, started: false, time: 0 };
   camera = new UniversalCamera('player', new Vector3(0, 1.75, -21), scene); camera.minZ = .05; camera.fov = 1.05;
   camera.attachControl(canvas, true); camera.angularSensibility = 3400; camera.inputs.removeByType('FreeCameraKeyboardMoveInput');
   const hemi = new HemisphericLight('moon', new Vector3(.2, 1, .1), scene); hemi.diffuse = new Color3(.18, .2, .22); hemi.groundColor = new Color3(.06, .02, .018); hemi.intensity = .55;
   const playerLight = new PointLight('flicker', Vector3.Zero(), scene); playerLight.parent = camera; playerLight.position.set(0, .1, .2); playerLight.diffuse = new Color3(.65, .38, .25); playerLight.intensity = 1.4; playerLight.range = 12;
   const glow = new GlowLayer('glow', scene); glow.intensity = .45;
-  const floorMat = mat('floor', '#221b18'); const wallMat = mat('walls', '#312421'); const tileMat = mat('tile', '#59463f'); const redMat = mat('blood', '#4c0b07');
+  const school = chapter === 2;
+  scene.clearColor = school ? new Color4(.012,.018,.025,1) : new Color4(.018,.014,.012,1);
+  scene.fogColor = school ? new Color3(.025,.04,.055) : new Color3(.045,.03,.026);
+  const floorMat = mat('floor', school ? '#26303a' : '#221b18'); const wallMat = mat('walls', school ? '#34414a' : '#312421'); const tileMat = mat('fixtures', school ? '#6d795f' : '#59463f'); const redMat = mat('blood', '#4c0b07');
   box('floor', [18, .4, 52], [0, -.2, 1], floorMat); box('ceiling', [18, .3, 52], [0, 5.2, 1], wallMat);
   box('left-wall', [.5, 5.4, 52], [-9, 2.5, 1], wallMat); box('right-wall', [.5, 5.4, 52], [9, 2.5, 1], wallMat);
   box('back-wall', [18, 5.4, .5], [0, 2.5, -25], wallMat); box('boss-wall', [18, 5.4, .5], [0, 2.5, 27], wallMat);
-  for (let z = -20; z < 22; z += 7) {
-    box('table', [4.4, .22, 1.5], [z % 14 === 0 ? -4.8 : 4.8, 1.1, z], tileMat);
-    for (const x of [-1.8, 1.8]) box('leg', [.18, 1.1, .18], [(z % 14 === 0 ? -4.8 : 4.8) + x, .55, z], wallMat);
+  if (school) {
+    const lockerMat = mat('lockers', '#354b57'); const boardMat = mat('blackboards', '#142d27');
+    for (let z=-20;z<22;z+=4) for (const x of [-8.55,8.55]) {
+      const locker=box('dented-locker',[.28,2.3,1.2],[x,1.25,z],lockerMat); locker.rotation.y=x<0?Math.PI/2:-Math.PI/2;
+    }
+    for (let z=-16;z<20;z+=9) {
+      for (const x of [-3.8,0,3.8]) { box('school-desk',[1.6,.16,.85],[x,.9,z],tileMat); box('desk-leg',[.12,.9,.12],[x-.55,.45,z],wallMat); box('desk-leg',[.12,.9,.12],[x+.55,.45,z],wallMat); }
+    }
+    box('nightmare-blackboard',[7,.12,2.1],[0,2.7,26.65],boardMat);
+    for (let z=-21;z<24;z+=7) { const lamp=new PointLight('failing-fluorescent',new Vector3(0,4.65,z),scene);lamp.diffuse=new Color3(.35,.58,.7);lamp.intensity=1.5;lamp.range=9; box('light-fixture',[3,.08,.35],[0,4.75,z],mat(`lamp-${z}`,'#a8bbc0','#667f86')); }
+    makeSurvivor(new Vector3(-5.8,0,-11),10); makeSurvivor(new Vector3(5.7,0,1),11); makeSurvivor(new Vector3(-5.5,0,15),12);
+    [[2,-14],[-3,-5],[2,7],[4,17],[-2,20]].forEach(([x,z],i)=>makeGhost(new Vector3(x,0,z),20+i));
+  } else {
+    for (let z = -20; z < 22; z += 7) { box('table', [4.4, .22, 1.5], [z % 14 === 0 ? -4.8 : 4.8, 1.1, z], tileMat); for (const x of [-1.8, 1.8]) box('leg', [.18, 1.1, .18], [(z % 14 === 0 ? -4.8 : 4.8) + x, .55, z], wallMat); }
+    for (let z = -18; z <= 18; z += 9) { const stain = MeshBuilder.CreateDisc('stain', { radius: .7 + Math.random() * .8, tessellation: 13 }, scene); stain.position.set((Math.random()-.5)*10,.015,z); stain.rotation.x=Math.PI/2; stain.material=redMat; }
+    for (let z = -20; z < 24; z += 8) { const bulb = new PointLight('bulb', new Vector3((z%16)-4,4.5,z),scene); bulb.diffuse=new Color3(.5,.18,.1); bulb.intensity=1.2; bulb.range=8; }
+    makeSurvivor(new Vector3(-5.7, 0, -10), 0); makeSurvivor(new Vector3(5.8, 0, 2), 1); makeSurvivor(new Vector3(-5.4, 0, 14), 2);
+    [[2,-13],[-3,-4],[1,8],[4,17]].forEach(([x,z],i)=>makeGhost(new Vector3(x,0,z),i));
   }
-  for (let z = -18; z <= 18; z += 9) { const stain = MeshBuilder.CreateDisc('stain', { radius: .7 + Math.random() * .8, tessellation: 13 }, scene); stain.position.set((Math.random()-.5)*10,.015,z); stain.rotation.x=Math.PI/2; stain.material=redMat; }
-  for (let z = -20; z < 24; z += 8) { const bulb = new PointLight('bulb', new Vector3((z%16)-4,4.5,z),scene); bulb.diffuse=new Color3(.5,.18,.1); bulb.intensity=1.2; bulb.range=8; }
-  makeSurvivor(new Vector3(-5.7, 0, -10), 0); makeSurvivor(new Vector3(5.8, 0, 2), 1); makeSurvivor(new Vector3(-5.4, 0, 14), 2);
-  [[2,-13],[-3,-4],[1,8],[4,17]].forEach(([x,z],i)=>makeGhost(new Vector3(x,0,z),i));
   return scene;
 }
 
@@ -137,8 +170,13 @@ function hurt(amount) {
   document.querySelector('#vignette').animate([{background:'#8c130000'},{background:'#8c130088'},{background:'#8c130000'}],{duration:300});
   if (state.health <= 0) end(false);
 }
-function win(){ end(true); }
-function end(won){ state.over=true; document.exitPointerLock?.(); ui.hud.classList.add('hidden'); ui.ending.classList.remove('hidden'); ui.endingKicker.textContent=won?'YOU SURVIVED':'THE NIGHTMARE WON'; ui.endingTitle.innerHTML=won?'DAWN<br>CAN WAIT':'SLEEP<br>FOREVER'; ui.endingCopy.textContent=won?'The haunted souls are free. But the nightmare has only begun.':'The Butcher Chef is still waiting in the dark.'; }
+function win(){
+  if(state.chapter===1){
+    state.over=true;nextChapter=2;document.exitPointerLock?.();ui.hud.classList.add('hidden');ui.ending.classList.remove('hidden');
+    ui.endingKicker.textContent='CHAPTER 1 COMPLETE';ui.endingTitle.innerHTML='THE BELL<br>IS RINGING';ui.endingCopy.textContent='The kitchen dissolves. A school corridor waits beyond the nightmare.';document.querySelector('#restart').textContent='ENTER CHAPTER 2';
+  } else end(true);
+}
+function end(won){ state.over=true; nextChapter=won?1:state.chapter; document.exitPointerLock?.(); ui.hud.classList.add('hidden'); ui.ending.classList.remove('hidden'); ui.endingKicker.textContent=won?'CHAPTER 2 COMPLETE':'THE NIGHTMARE WON'; ui.endingTitle.innerHTML=won?'SCHOOL<br>IS OUT':'SLEEP<br>FOREVER'; ui.endingCopy.textContent=won?'The Evil Principal is defeated. Both chapters of the nightmare are complete.':state.chapter===1?'The Butcher Chef is still waiting in the dark.':'The Evil Principal has trapped every soul in detention.'; document.querySelector('#restart').textContent=won?'PLAY AGAIN':`RETRY CHAPTER ${state.chapter}`; }
 
 function update(dt) {
   if (state.over || !state.started) return; state.time += dt;
@@ -147,14 +185,14 @@ function update(dt) {
   if(move.lengthSquared()>0){move.normalize().scaleInPlace(4.5*dt); const next=camera.position.add(move); if(Math.abs(next.x)<8.35&&next.z>-24.2&&next.z<26.2)camera.position.addInPlace(move);}
   state.ySpeed -= 17*dt; camera.position.y += state.ySpeed*dt; if(camera.position.y<=1.75){camera.position.y=1.75;state.ySpeed=0;state.grounded=true;}
   let nearestSoul = Infinity;
-  for(const soul of state.survivors) if(!soul.saved){ soul.root.position.y=Math.sin(state.time*2)*.08; const d=Vector3.Distance(camera.position,soul.root.position); nearestSoul=Math.min(nearestSoul,d); if(d<2.3){soul.saved=true;soul.root.dispose();soul.light.dispose();state.saved++;ui.souls.textContent=`SOULS ${state.saved} / 3`;ui.objective.textContent=state.saved<3?'Find the remaining souls':'Prepare for the Butcher Chef'; if(state.saved===3)setTimeout(makeChef,800);} }
+  for(const soul of state.survivors) if(!soul.saved){ soul.root.position.y=Math.sin(state.time*2)*.08; const d=Vector3.Distance(camera.position,soul.root.position); nearestSoul=Math.min(nearestSoul,d); if(d<2.3){soul.saved=true;soul.root.dispose();soul.light.dispose();state.saved++;ui.souls.textContent=`SOULS ${state.saved} / 3`;ui.objective.textContent=state.saved<3?'Find the remaining souls':state.chapter===1?'Prepare for the Butcher Chef':'Report to the Principal’s office'; if(state.saved===3)setTimeout(spawnBoss,800);} }
   let danger=false;
   for(const e of state.enemies) if(e.alive){ const delta=camera.position.subtract(e.root.position);delta.y=0;const dist=delta.length(); if(dist<12){danger=true;e.root.lookAt(new Vector3(camera.position.x,e.root.position.y+1.2,camera.position.z)); if(dist>1.55)e.root.position.addInPlace(delta.normalize().scale(e.speed*dt)); else {e.cooldown-=dt;if(e.cooldown<=0){hurt(e.damage);e.cooldown=e.boss ? 0.8 : 1.15;}}} e.root.position.y=Math.sin(state.time*2+(e.boss?0:2))* (e.boss?0:.12); }
   ui.prompt.textContent=danger?'CLICK  •  WHACK':state.saved<3?`FOLLOW THE BLUE BEACON  •  ${Math.ceil(nearestSoul)}m\nWALK CLOSE TO THE PERSON TO RESCUE THEM`:'';
 }
 
-function startGame(){ ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossFill.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls'; if(scene)scene.dispose();createScene();state.started=true;canvas.requestPointerLock(); }
-document.querySelector('#start').addEventListener('click',startGame);document.querySelector('#restart').addEventListener('click',startGame);
+function startGame(chapter=1){ ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossFill.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls';ui.chapterLabel.textContent=chapter===1?"CHAPTER 1 · THE BUTCHER'S KITCHEN":"CHAPTER 2 · NIGHTMARE HIGH";ui.bossName.textContent=chapter===1?'THE BUTCHER CHEF':'THE EVIL PRINCIPAL'; if(scene)scene.dispose();createScene(chapter);state.started=true;canvas.requestPointerLock(); }
+document.querySelector('#start').addEventListener('click',()=>startGame(1));document.querySelector('#restart').addEventListener('click',()=>startGame(nextChapter));
 window.addEventListener('keydown',e=>{if(!state)return;state.keys[e.code]=true;if(e.code==='Space'&&state.grounded&&!state.over){state.ySpeed=6.5;state.grounded=false;e.preventDefault();}});
 window.addEventListener('keyup',e=>state&&(state.keys[e.code]=false));window.addEventListener('mousedown',e=>e.button===0&&attack());canvas.addEventListener('click',()=>!state?.over&&document.pointerLockElement!==canvas&&canvas.requestPointerLock());
 createScene();engine.runRenderLoop(()=>{const dt=Math.min(engine.getDeltaTime()/1000,.05);update(dt);scene.render();});window.addEventListener('resize',()=>engine.resize());

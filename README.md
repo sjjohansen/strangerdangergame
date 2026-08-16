@@ -2,6 +2,11 @@
 
 An offline-capable first-person horror game prototype built with Babylon.js.
 
+## Chapters
+
+- Chapter 1 — The Butcher's Kitchen: rescue three souls and defeat the Butcher Chef.
+- Chapter 2 — Nightmare High: unlocked after Chapter 1; search the haunted school and defeat the Evil Principal.
+
 ## Run locally
 
 ```bash

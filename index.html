@@ -3,16 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nightmare Rescue — Chapter 1</title>
+    <title>Nightmare Rescue</title>
   </head>
   <body>
     <canvas id="game"></canvas>
     <div id="vignette"></div>
     <div id="hud" class="hidden">
-      <div class="objective"><span>CHAPTER 1 · THE BUTCHER'S KITCHEN</span><strong id="objective">Find the haunted souls</strong></div>
+      <div class="objective"><span id="chapter-label">CHAPTER 1 · THE BUTCHER'S KITCHEN</span><strong id="objective">Find the haunted souls</strong></div>
       <div id="mission" class="mission"><b>YOUR MISSION</b><span>Follow the blue beacons</span><small>Walk up to each haunted person to rescue them</small></div>
       <div class="stats"><span id="health">♥ 100</span><span id="souls">SOULS 0 / 3</span></div>
-      <div id="boss" class="boss hidden"><span>THE BUTCHER CHEF</span><div><i id="boss-fill"></i></div></div>
+      <div id="boss" class="boss hidden"><span id="boss-name">THE BUTCHER CHEF</span><div><i id="boss-fill"></i></div></div>
       <div class="crosshair">·</div>
       <div id="prompt" class="prompt"></div>
       <div class="hands">
@@ -27,7 +27,7 @@
       <button id="start">ENTER THE NIGHTMARE</button>
       <div class="controls"><span>WASD <small>MOVE</small></span><span>MOUSE <small>LOOK</small></span><span>SPACE <small>JUMP</small></span><span>CLICK <small>WHACK</small></span></div>
     </section>
-    <section id="ending" class="hidden"><div><span id="ending-kicker">YOU SURVIVED</span><h2 id="ending-title">DAWN<br>CAN WAIT</h2><p id="ending-copy">The haunted souls are free. But the nightmare has only begun.</p><button id="restart">PLAY AGAIN</button></div></section>
+    <section id="ending" class="hidden"><div><span id="ending-kicker">YOU SURVIVED</span><h2 id="ending-title">DAWN<br>CAN WAIT</h2><p id="ending-copy">The haunted souls are free. But the nightmare has only begun.</p><button id="restart">CONTINUE</button></div></section>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
