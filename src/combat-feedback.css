@@ -10,3 +10,13 @@
 @keyframes hit-confirm { 0%{opacity:0;transform:translate(-50%,-50%) scale(.45) rotate(-12deg)} 30%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(0)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} }
 @keyframes screen-impact { 0%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 55%{transform:translate(3px,-2px)} 100%{transform:translate(0,0)} }
 button:disabled { cursor:wait; opacity:.55; filter:grayscale(.55); background:#34211e; border-color:#60433d; }
+#boss-bar-2 { margin-top:4px; }
+#boss-fill-2 { background:#5842bd; box-shadow:0 0 10px #6e5cff; }
+.level-picker { position:fixed; inset:0; z-index:10; display:grid; place-items:center; background:#020305ed; text-align:center; }
+.level-picker>div { width:min(440px,90vw); padding:34px; border:1px solid #263f50; background:radial-gradient(circle at 50% 0,#152d3b,#080b10 65%); box-shadow:0 20px 80px #000; }
+.level-picker span { color:#51cbea; font-size:9px; letter-spacing:.34em; }
+.level-picker h2 { margin:10px 0 5px; font:32px Georgia,serif; }
+.level-picker p { color:#82949e; margin:0 0 22px; }
+.level-picker button { display:block; width:100%; margin:9px 0; background:#142835; border-color:#31576a; }
+.level-picker button:hover { background:#20506a; }
+.level-picker button.quiet { margin-top:20px; background:transparent; border-color:#3b3e42; color:#85898d; }
