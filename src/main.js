@@ -1,5 +1,6 @@
 import './style.css';
 import './hands.css';
+import './combat-feedback.css';
 import {
   Engine, Scene, UniversalCamera, Vector3, Color3, Color4, HemisphericLight,
   PointLight, MeshBuilder, StandardMaterial, TransformNode, Animation,
@@ -14,13 +15,14 @@ const ui = {
   ending: document.querySelector('#ending'), objective: document.querySelector('#objective'),
   health: document.querySelector('#health'), souls: document.querySelector('#souls'),
   prompt: document.querySelector('#prompt'), hands: document.querySelector('.hands'),
+  hitMarker: document.querySelector('#hit-marker'),
   mission: document.querySelector('#mission'),
   boss: document.querySelector('#boss'), bossFill: document.querySelector('#boss-fill'),
   endingKicker: document.querySelector('#ending-kicker'), endingTitle: document.querySelector('#ending-title'),
   endingCopy: document.querySelector('#ending-copy')
 };
 
-let scene, camera, state, nextChapter = 1;
+let scene, camera, state, nextChapter = 1, chapterCountdown;
 const mat = (name, color, emissive = null) => {
   const m = new StandardMaterial(name, scene);
   m.diffuseColor = Color3.FromHexString(color);
@@ -160,9 +162,25 @@ function attack() {
     if (dist < best && Vector3.Dot(delta.normalize(), forward) > .72) { target = enemy; best = dist; }
   }
   if (!target) return;
-  target.hp--; target.root.scaling.scaleInPlace(.9); setTimeout(()=>target.alive && target.root.scaling.scaleInPlace(1/.9),100);
+  showHitFeedback(target);
+  target.hp--; target.root.scaling.scaleInPlace(.88); setTimeout(()=>target.alive && target.root.scaling.scaleInPlace(1/.88),100);
   if (target.boss) ui.bossFill.style.width = `${Math.max(0,target.hp/target.maxHp*100)}%`;
   if (target.hp <= 0) { target.alive=false; target.root.dispose(); if(target.boss) win(); }
+}
+
+function showHitFeedback(target) {
+  ui.hitMarker.classList.remove('confirm'); ui.hud.classList.remove('impact');
+  void ui.hitMarker.offsetWidth;
+  ui.hitMarker.classList.add('confirm'); ui.hud.classList.add('impact');
+  for (const mesh of target.root.getChildMeshes()) {
+    mesh.renderOverlay = true; mesh.overlayColor = new Color3(1, .05, .015); mesh.overlayAlpha = .82;
+  }
+  const impact = new PointLight('punch-impact', target.root.position.add(new Vector3(0,1.3,0)), scene);
+  impact.diffuse = new Color3(1,.08,.02); impact.intensity = 12; impact.range = 4;
+  setTimeout(() => {
+    if (target.alive) for (const mesh of target.root.getChildMeshes()) mesh.renderOverlay = false;
+    impact.dispose(); ui.hud.classList.remove('impact');
+  }, 120);
 }
 
 function hurt(amount) {
@@ -173,10 +191,12 @@ function hurt(amount) {
 function win(){
   if(state.chapter===1){
     state.over=true;nextChapter=2;document.exitPointerLock?.();ui.hud.classList.add('hidden');ui.ending.classList.remove('hidden');
-    ui.endingKicker.textContent='CHAPTER 1 COMPLETE';ui.endingTitle.innerHTML='THE BELL<br>IS RINGING';ui.endingCopy.textContent='The kitchen dissolves. A school corridor waits beyond the nightmare.';document.querySelector('#restart').textContent='ENTER CHAPTER 2';
+    ui.endingKicker.textContent='CHAPTER 1 COMPLETE';ui.endingTitle.innerHTML='THE KITCHEN<br>IS CLEARED';ui.endingCopy.textContent='The Butcher Chef is defeated and the trapped souls are safe. But a school bell is ringing deeper in the nightmare.';
+    const continueButton=document.querySelector('#restart');let seconds=5;continueButton.disabled=true;continueButton.textContent=`CHAPTER 2 UNLOCKS IN ${seconds}`;
+    clearInterval(chapterCountdown);chapterCountdown=setInterval(()=>{seconds--;if(seconds>0){continueButton.textContent=`CHAPTER 2 UNLOCKS IN ${seconds}`;}else{clearInterval(chapterCountdown);continueButton.disabled=false;continueButton.textContent='START CHAPTER 2';}},1000);
   } else end(true);
 }
-function end(won){ state.over=true; nextChapter=won?1:state.chapter; document.exitPointerLock?.(); ui.hud.classList.add('hidden'); ui.ending.classList.remove('hidden'); ui.endingKicker.textContent=won?'CHAPTER 2 COMPLETE':'THE NIGHTMARE WON'; ui.endingTitle.innerHTML=won?'SCHOOL<br>IS OUT':'SLEEP<br>FOREVER'; ui.endingCopy.textContent=won?'The Evil Principal is defeated. Both chapters of the nightmare are complete.':state.chapter===1?'The Butcher Chef is still waiting in the dark.':'The Evil Principal has trapped every soul in detention.'; document.querySelector('#restart').textContent=won?'PLAY AGAIN':`RETRY CHAPTER ${state.chapter}`; }
+function end(won){ state.over=true; clearInterval(chapterCountdown); nextChapter=won?1:state.chapter; document.exitPointerLock?.(); ui.hud.classList.add('hidden'); ui.ending.classList.remove('hidden'); ui.endingKicker.textContent=won?'CHAPTER 2 COMPLETE':'THE NIGHTMARE WON'; ui.endingTitle.innerHTML=won?'SCHOOL<br>IS OUT':'SLEEP<br>FOREVER'; ui.endingCopy.textContent=won?'The Evil Principal is defeated. Both chapters of the nightmare are complete.':state.chapter===1?'The Butcher Chef is still waiting in the dark.':'The Evil Principal has trapped every soul in detention.'; const restartButton=document.querySelector('#restart');restartButton.disabled=false;restartButton.textContent=won?'PLAY AGAIN':`RETRY CHAPTER ${state.chapter}`; }
 
 function update(dt) {
   if (state.over || !state.started) return; state.time += dt;
@@ -191,7 +211,7 @@ function update(dt) {
   ui.prompt.textContent=danger?'CLICK  •  WHACK':state.saved<3?`FOLLOW THE BLUE BEACON  •  ${Math.ceil(nearestSoul)}m\nWALK CLOSE TO THE PERSON TO RESCUE THEM`:'';
 }
 
-function startGame(chapter=1){ ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossFill.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls';ui.chapterLabel.textContent=chapter===1?"CHAPTER 1 · THE BUTCHER'S KITCHEN":"CHAPTER 2 · NIGHTMARE HIGH";ui.bossName.textContent=chapter===1?'THE BUTCHER CHEF':'THE EVIL PRINCIPAL'; if(scene)scene.dispose();createScene(chapter);state.started=true;canvas.requestPointerLock(); }
+function startGame(chapter=1){ clearInterval(chapterCountdown);ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossFill.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls';ui.chapterLabel.textContent=chapter===1?"CHAPTER 1 · THE BUTCHER'S KITCHEN":"CHAPTER 2 · NIGHTMARE HIGH";ui.bossName.textContent=chapter===1?'THE BUTCHER CHEF':'THE EVIL PRINCIPAL'; if(scene)scene.dispose();createScene(chapter);state.started=true;canvas.requestPointerLock(); }
 document.querySelector('#start').addEventListener('click',()=>startGame(1));document.querySelector('#restart').addEventListener('click',()=>startGame(nextChapter));
 window.addEventListener('keydown',e=>{if(!state)return;state.keys[e.code]=true;if(e.code==='Space'&&state.grounded&&!state.over){state.ySpeed=6.5;state.grounded=false;e.preventDefault();}});
 window.addEventListener('keyup',e=>state&&(state.keys[e.code]=false));window.addEventListener('mousedown',e=>e.button===0&&attack());canvas.addEventListener('click',()=>!state?.over&&document.pointerLockElement!==canvas&&canvas.requestPointerLock());

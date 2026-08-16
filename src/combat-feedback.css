@@ -1,0 +1,12 @@
+.hit-marker { position:absolute; left:50%; top:50%; width:64px; height:64px; transform:translate(-50%,-50%) scale(.55); opacity:0; }
+.hit-marker i { position:absolute; left:29px; top:3px; width:5px; height:19px; background:#ffddd7; border-radius:4px; box-shadow:0 0 7px #f20,0 0 14px #f20; transform-origin:3px 29px; }
+.hit-marker i:nth-child(1) { transform:rotate(45deg); }
+.hit-marker i:nth-child(2) { transform:rotate(135deg); }
+.hit-marker i:nth-child(3) { transform:rotate(225deg); }
+.hit-marker i:nth-child(4) { transform:rotate(315deg); }
+.hit-marker b { position:absolute; top:68px; left:50%; transform:translateX(-50%); color:#ff6958; font-size:9px; letter-spacing:.28em; text-shadow:0 2px 6px #000; }
+.hit-marker.confirm { animation:hit-confirm .27s ease-out; }
+#hud.impact { animation:screen-impact .16s ease-out; }
+@keyframes hit-confirm { 0%{opacity:0;transform:translate(-50%,-50%) scale(.45) rotate(-12deg)} 30%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(0)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)} }
+@keyframes screen-impact { 0%{transform:translate(0,0)} 25%{transform:translate(-4px,2px)} 55%{transform:translate(3px,-2px)} 100%{transform:translate(0,0)} }
+button:disabled { cursor:wait; opacity:.55; filter:grayscale(.55); background:#34211e; border-color:#60433d; }
