@@ -12,7 +12,7 @@
       <div class="objective"><span id="chapter-label">CHAPTER 1 · THE BUTCHER'S KITCHEN</span><strong id="objective">Find the haunted souls</strong></div>
       <div id="mission" class="mission"><b>YOUR MISSION</b><span>Follow the blue beacons</span><small>Walk up to each haunted person to rescue them</small></div>
       <div class="stats"><span id="health">♥ 100</span><span id="souls">SOULS 0 / 3</span></div>
-      <div id="boss" class="boss hidden"><span id="boss-name">THE BUTCHER CHEF</span><div><i id="boss-fill"></i></div></div>
+      <div id="boss" class="boss hidden"><span id="boss-name">THE BUTCHER CHEF</span><div><i id="boss-fill"></i></div><div id="boss-bar-2" class="hidden"><i id="boss-fill-2"></i></div></div>
       <div class="crosshair">·</div>
       <div id="hit-marker" class="hit-marker"><i></i><i></i><i></i><i></i><b>HIT</b></div>
       <div id="prompt" class="prompt"></div>
@@ -29,6 +29,14 @@
       <div class="controls"><span>WASD <small>MOVE</small></span><span>MOUSE <small>LOOK</small></span><span>SPACE <small>JUMP</small></span><span>CLICK <small>WHACK</small></span></div>
     </section>
     <section id="ending" class="hidden"><div><span id="ending-kicker">YOU SURVIVED</span><h2 id="ending-title">DAWN<br>CAN WAIT</h2><p id="ending-copy">The haunted souls are free. But the nightmare has only begun.</p><button id="restart">CONTINUE</button></div></section>
+    <section id="level-picker" class="level-picker hidden">
+      <div><span>DEVELOPER COMMAND</span><h2>CHAPTER SELECT</h2><p>Choose a nightmare to test.</p>
+        <button data-chapter="1">1 · THE BUTCHER'S KITCHEN</button>
+        <button data-chapter="2">2 · NIGHTMARE HIGH</button>
+        <button data-chapter="3">3 · THE ROOFTOP</button>
+        <button id="close-picker" class="quiet">CANCEL</button>
+      </div>
+    </section>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
