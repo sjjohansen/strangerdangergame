@@ -11,7 +11,6 @@ const canvas = document.querySelector('#game');
 const engine = new Engine(canvas, true, { stencil: true });
 const ui = {
   menu: document.querySelector('#menu'), hud: document.querySelector('#hud'),
-  levelPicker: document.querySelector('#level-picker'),
   chapterLabel: document.querySelector('#chapter-label'), bossName: document.querySelector('#boss-name'),
   ending: document.querySelector('#ending'), objective: document.querySelector('#objective'),
   health: document.querySelector('#health'), souls: document.querySelector('#souls'),
@@ -23,7 +22,7 @@ const ui = {
   endingCopy: document.querySelector('#ending-copy')
 };
 
-let scene, camera, state, nextChapter = 1, chapterCountdown, pickerWasRunning = false;
+let scene, camera, state, nextChapter = 1, chapterCountdown;
 const mat = (name, color, emissive = null) => {
   const m = new StandardMaterial(name, scene);
   m.diffuseColor = Color3.FromHexString(color);
@@ -268,11 +267,8 @@ function update(dt) {
   ui.prompt.textContent=danger?'CLICK  •  WHACK':state.saved<3?`FOLLOW THE BLUE BEACON  •  ${Math.ceil(nearestSoul)}m\nWALK CLOSE TO THE PERSON TO RESCUE THEM`:'';
 }
 
-function startGame(chapter=1){ clearInterval(chapterCountdown);ui.levelPicker.classList.add('hidden');ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossBar2.classList.add('hidden');ui.bossFill.style.width='100%';ui.bossFill2.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls';const chapterNames=['',"CHAPTER 1 · THE BUTCHER'S KITCHEN","CHAPTER 2 · NIGHTMARE HIGH","CHAPTER 3 · THE ROOFTOP"];const bossNames=['','THE BUTCHER CHEF','THE EVIL PRINCIPAL','THE STRANGER'];ui.chapterLabel.textContent=chapterNames[chapter];ui.bossName.textContent=bossNames[chapter]; if(scene)scene.dispose();createScene(chapter);state.started=true;canvas.requestPointerLock(); }
-function openLevelPicker(){if(!ui.levelPicker.classList.contains('hidden'))return;pickerWasRunning=Boolean(state?.started&&!state.over);if(state)state.started=false;document.exitPointerLock?.();ui.levelPicker.classList.remove('hidden');}
-function closeLevelPicker(){ui.levelPicker.classList.add('hidden');if(pickerWasRunning&&state&&!state.over){state.started=true;canvas.requestPointerLock();}}
+function startGame(chapter=1){ clearInterval(chapterCountdown);ui.menu.classList.add('hidden');ui.ending.classList.add('hidden');ui.hud.classList.remove('hidden');ui.mission.classList.remove('hidden');ui.boss.classList.add('hidden');ui.bossBar2.classList.add('hidden');ui.bossFill.style.width='100%';ui.bossFill2.style.width='100%';ui.health.textContent='♥ 100';ui.souls.textContent='SOULS 0 / 3';ui.objective.textContent='Rescue 3 haunted souls';const chapterNames=['',"CHAPTER 1 · THE BUTCHER'S KITCHEN","CHAPTER 2 · NIGHTMARE HIGH","CHAPTER 3 · THE ROOFTOP"];const bossNames=['','THE BUTCHER CHEF','THE EVIL PRINCIPAL','THE STRANGER'];ui.chapterLabel.textContent=chapterNames[chapter];ui.bossName.textContent=bossNames[chapter]; if(scene)scene.dispose();createScene(chapter);state.started=true;canvas.requestPointerLock(); }
 document.querySelector('#start').addEventListener('click',()=>startGame(1));document.querySelector('#restart').addEventListener('click',()=>startGame(nextChapter));
-document.querySelectorAll('[data-chapter]').forEach(button=>button.addEventListener('click',()=>startGame(Number(button.dataset.chapter))));document.querySelector('#close-picker').addEventListener('click',closeLevelPicker);
-window.addEventListener('keydown',e=>{if(e.ctrlKey&&e.shiftKey&&e.code==='KeyL'){e.preventDefault();openLevelPicker();return;}if(e.code==='Escape'&&!ui.levelPicker.classList.contains('hidden')){closeLevelPicker();return;}if(!state)return;state.keys[e.code]=true;if(e.code==='Space'&&state.grounded&&!state.over){state.ySpeed=6.5;state.grounded=false;e.preventDefault();}});
+window.addEventListener('keydown',e=>{if(!state)return;state.keys[e.code]=true;if(e.code==='Space'&&state.grounded&&!state.over){state.ySpeed=6.5;state.grounded=false;e.preventDefault();}});
 window.addEventListener('keyup',e=>state&&(state.keys[e.code]=false));window.addEventListener('mousedown',e=>e.button===0&&attack());canvas.addEventListener('click',()=>!state?.over&&document.pointerLockElement!==canvas&&canvas.requestPointerLock());
 createScene();engine.runRenderLoop(()=>{const dt=Math.min(engine.getDeltaTime()/1000,.05);update(dt);scene.render();});window.addEventListener('resize',()=>engine.resize());

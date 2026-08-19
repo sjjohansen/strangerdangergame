@@ -45,7 +45,3 @@ Serve the generated `dist/` directory with any local static server. Babylon.js a
 - Space: jump
 - Left click: whack
 - Escape: release the mouse
-
-## Developer level select
-
-Press `Ctrl+Shift+L` at any time to pause the game and open the hidden chapter selector. Choosing a chapter starts it immediately without requiring the previous chapter to be completed. Select **Cancel** or press `Escape` to resume the current chapter.
